@@ -2,35 +2,41 @@
 // where your node app starts
 
 // init project
-let express = require('express');
-let app = express();
+const express = require('express');
+const app = express();
 
 // enable CORS (https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
-// so that your API is remotely testable by FCC 
-let cors = require('cors');
+// so that your API is remotely testable by FCC
+const cors = require('cors');
 app.use(cors({optionsSuccessStatus: 200}));  // some legacy browsers choke on 204
 
 // http://expressjs.com/en/starter/static-files.html
 app.use(express.static('public'));
 
 // http://expressjs.com/en/starter/basic-routing.html
-app.get("/", (req, res) => {
+app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
 
-// your first API endpoint... 
-app.get("/api/hello",  (req, res) => {
+// your first API endpoint...
+app.get("/api/hello", function (req, res) {
   res.json({greeting: 'hello API'});
 });
 
 
-app.get("/api/whoami",(req,res) => {
-  let ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.ip || req.ips;
+const requestIp = require("request-ip");
+app.use(requestIp.mw());
+
+app.get("/api/whoami",(req, res, next) => {
+  const clientIp = requestIp.getClientIp(req);
+  next();
+},(req,res) => {
+  let ipaddress = req.clientIp;
   let language = req.acceptsLanguages();
   let software = req.get('User-Agent');
   res.json({
-    ip:ip,
+    ipaddress:ipaddress,
     language: language[0],
     software: software
   });
@@ -38,6 +44,6 @@ app.get("/api/whoami",(req,res) => {
 
 
 // listen for requests :)
-let listener = app.listen(process.env.PORT, () => {
+const listener = app.listen(process.env.PORT, function () {
   console.log('Your app is listening on port ' + listener.address().port);
 });
